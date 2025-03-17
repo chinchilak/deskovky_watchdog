@@ -1,18 +1,18 @@
-1. Build the Docker Image
+## 1. Build the Docker Image
 
 Open a terminal in the project directory and run:
 
-docker build -t streamlit-scraper .
+```docker build -t tlama-scraper .```
 
-2. Run the Container
+## 2. Run the Container
 
 Once the image is built, start the container with:
 
-docker run -p 8501:8501 --name streamlit-scraper-container streamlit-scraper
+```docker run -p 8501:8501 --name tlama-scraper-container tlama-scraper```
 
 This maps port 8501 (default for Streamlit) so you can access the app in your browser.
 
-3. Access the App
+## 3. Access the App
 
 Open your browser and go to:
 
