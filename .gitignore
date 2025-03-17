@@ -1,0 +1,15 @@
+scrape_data.db
+
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+*.log
+*.tmp
+*.swp
+
+.env
+.venv/
+venv/
+*.env
