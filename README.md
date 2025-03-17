@@ -1,3 +1,7 @@
+## 0. Prebuilt image on Docker Hub
+
+https://hub.docker.com/r/chinchilak/deskovky-scraper
+
 ## 1. Build the Docker Image
 
 Open a terminal in the project directory and run:
@@ -17,4 +21,6 @@ This maps port 8501 (default for Streamlit) so you can access the app in your br
 Open your browser and go to:
 
 http://localhost:8501
+
+
 
