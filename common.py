@@ -2,6 +2,7 @@ import sqlite3
 import datetime
 import requests
 from bs4 import BeautifulSoup
+import json
 
 DB_PATH = "scrape_data.db"
 BASE_URL = "https://www.tlamagames.com"
@@ -27,6 +28,20 @@ def create_db():
             time_of_day TEXT
         )
     ''')
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS comparison_log (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        ts1 TEXT,
+        ts2 TEXT,
+        new_count INTEGER,
+        removed_count INTEGER,
+        updated_count INTEGER,
+        new_items TEXT,
+        removed_items TEXT,
+        updated_items TEXT,
+        log_time TEXT
+    )
+    ''')
     conn.commit()
     conn.close()
 
@@ -39,9 +54,37 @@ def insert_products(products):
             INSERT INTO product (run_timestamp, name, availability, price, link)
             VALUES (?, ?, ?, ?, ?)
         """, (timestamp, prod["name"], prod["availability"], prod["price"], prod["link"]))
+    
     conn.commit()
     conn.close()
     return timestamp
+
+def clean_old_data():
+    """
+    Keeps only rows from the 10 latest unique timestamps.
+    Assumes the table 'product' has a column 'run_timestamp'.
+    """
+    conn = sqlite3.connect("scrape_data.db")
+    cursor = conn.cursor()
+    
+    # Retrieve the 10 latest unique run_timestamps.
+    cursor.execute("""
+        SELECT DISTINCT run_timestamp
+        FROM product
+        ORDER BY run_timestamp DESC
+        LIMIT 10
+    """)
+    latest_timestamps = [row[0] for row in cursor.fetchall()]
+    
+    if not latest_timestamps:
+        conn.close()
+        return
+
+    placeholders = ','.join(['?'] * len(latest_timestamps))
+    sql = f"DELETE FROM product WHERE run_timestamp NOT IN ({placeholders})"
+    cursor.execute(sql, latest_timestamps)
+    conn.commit()
+    conn.close()
 
 def get_all_run_timestamps():
     conn = sqlite3.connect(DB_PATH)
@@ -148,3 +191,49 @@ def compare_runs(ts1, ts2):
         if diff:
             updated_products[name] = diff
     return new_products, removed_products, updated_products
+
+
+def log_comparison_to_db():
+    """Log the comparison results into the comparison_log table."""
+
+    ts1, ts2 = get_latest_timestamps()
+    new_products, removed_products, updated_products = compare_runs(ts1, ts2)
+
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    log_time = datetime.datetime.now().isoformat()
+    cursor.execute("""
+        INSERT INTO comparison_log 
+        (ts1, ts2, new_count, removed_count, updated_count, new_items, removed_items, updated_items, log_time)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    """, (
+        ts1,
+        ts2,
+        len(new_products),
+        len(removed_products),
+        len(updated_products),
+        json.dumps(new_products),
+        json.dumps(removed_products),
+        json.dumps(updated_products),
+        log_time
+    ))
+    conn.commit()
+    conn.close()
+
+
+def get_latest_timestamps():
+    """Fetch the two most recent timestamps from the database."""
+    conn = sqlite3.connect("scrape_data.db")
+    cursor = conn.cursor()
+    cursor.execute("""
+        SELECT DISTINCT run_timestamp FROM product 
+        ORDER BY run_timestamp DESC 
+        LIMIT 2
+    """)
+    timestamps = [row[0] for row in cursor.fetchall()]
+    conn.close()
+    
+    # Ensure there are at least two timestamps to compare
+    if len(timestamps) < 2:
+        return timestamps[0] if timestamps else None, timestamps[0] if timestamps else None
+    return timestamps[1], timestamps[0] 

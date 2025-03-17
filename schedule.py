@@ -1,40 +1,32 @@
 import streamlit as st
 import datetime
-import logging
-import pandas as pd
 
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.cron import CronTrigger
 from apscheduler.triggers.interval import IntervalTrigger
 
-from common import create_db, fetch_all_data, insert_products
+from common import fetch_all_data, insert_products, clean_old_data, log_comparison_to_db, get_latest_timestamps
 
-# Make sure to call set_page_config at the very beginning!
+
 st.set_page_config(layout="wide", page_title="Schedule & Run Scraper")
 
-# Debug: indicate that the page started rendering
+
 st.write("## Schedule & Run Scraper Page Loaded")
 
-# Initialize database and logging
-create_db()
-logging.basicConfig(level=logging.INFO)
-
-# Initialize scheduler in session state only once.
 if "scheduler" not in st.session_state:
     st.session_state.scheduler = BackgroundScheduler()
     st.session_state.scheduler.start()
-    st.write("Scheduler created and started.")
+    st.success("Scheduler created and started.")
 else:
-    st.write("Scheduler loaded from session state.")
+    st.info("Scheduler loaded from session state.")
 
-# --- Job Function ---
-def run_scrape_job(job_name=""):
-    logging.info(f"Running scheduled scrape job: {job_name}")
+def run_scrape_job(job_name:str=""):
     products = fetch_all_data()
-    ts = insert_products(products)
-    logging.info(f"Job {job_name} completed at {ts} with {len(products)} products.")
+    insert_products(products)
+    clean_old_data()    
+    log_comparison_to_db()
 
-# --- Scheduling Functions for Cron Jobs ---
+
 def schedule_cron_jobs(job_name, frequency, days, times):
     job_list = []
     if frequency == "daily":
@@ -61,7 +53,6 @@ def schedule_cron_jobs(job_name, frequency, days, times):
         job_list.append((job_id, job.next_run_time))
     return job_list
 
-# --- Scheduling Function for Interval Jobs ---
 def schedule_interval_job(job_name, interval_value, interval_unit):
     job_id = f"{job_name}_interval_{interval_value}{interval_unit}_{int(datetime.datetime.now().timestamp())}"
     if interval_unit == "minutes":
@@ -77,21 +68,8 @@ def schedule_interval_job(job_name, interval_value, interval_unit):
     else:
         return None, None
 
-# ========================
-# Immediate Scraper Section
-# ========================
-st.header("Run Scraper Immediately")
-if st.button("Run Scraper Now"):
-    products = fetch_all_data()
-    run_timestamp = insert_products(products)
-    st.success(f"Immediate scrape completed at {run_timestamp} with {len(products)} products.")
-
-st.markdown("---")
-
-# ========================
-# Schedule New Job Section
-# ========================
-st.subheader("Schedule New Job")
+if st.button("Run Scraper"):
+    run_scrape_job()
 
 job_type = st.selectbox("Job Type", options=["Cron", "Interval"])
 job_name = st.text_input("Job Name", value="ScrapeJob")
@@ -134,11 +112,7 @@ elif job_type == "Interval":
         else:
             st.error("Error scheduling interval job.")
 
-st.markdown("---")
 
-# ========================
-# List Current Jobs Section with Remove Button
-# ========================
 st.subheader("Current Scheduled Jobs")
 jobs = st.session_state.scheduler.get_jobs()
 if jobs:

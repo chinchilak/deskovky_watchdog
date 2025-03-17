@@ -1,15 +1,14 @@
 import streamlit as st
+from common import create_db
+
+create_db()
 
 pages = {
-    "Schedule": [
-        st.Page("schedule.py", title="Schedule & Run Scraper")
-    ],
-    "Compare": [
-        st.Page("compare.py", title="Compare Scrape Runs")
-    ],
-    "View Data": [
-        st.Page("db_view.py", title="View Database Data")
-    ],
+    "Menu": [
+        st.Page("report.py", title="Report"),
+        st.Page("schedule.py", title="Schedule & Run Scraper"),
+        st.Page("dbview.py", title="View Database Data")
+    ]
 }
 
 pg = st.navigation(pages)
