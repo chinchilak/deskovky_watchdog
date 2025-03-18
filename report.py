@@ -5,12 +5,11 @@ import pandas as pd
 
 from common import DB_PATH
 
-
 st.set_page_config(layout="wide")
 
 
 def fetch_comparison_log():
-    """Retrieve all comparison logs from the database as a DataFrame with readable timestamps."""
+    """Retrieve and expand comparison logs into a structured DataFrame."""
     with sqlite3.connect(DB_PATH) as conn:
         df = pd.read_sql_query("""
             SELECT ts1, ts2, new_count, removed_count, updated_count, new_items, removed_items, updated_items, log_time
@@ -23,18 +22,46 @@ def fetch_comparison_log():
 
     # Convert timestamps to human-readable format
     df["log_time"] = pd.to_datetime(df["log_time"]).dt.strftime("%Y-%m-%d %H:%M:%S")
-    df["ts1"] = pd.to_datetime(df["ts1"]).dt.strftime("%Y-%m-%d %H:%M:%S")
-    df["ts2"] = pd.to_datetime(df["ts2"]).dt.strftime("%Y-%m-%d %H:%M:%S")
 
     # Decode JSON fields into dictionary objects
     df["new_items"] = df["new_items"].apply(lambda x: json.loads(x) if x else {})
     df["removed_items"] = df["removed_items"].apply(lambda x: json.loads(x) if x else {})
     df["updated_items"] = df["updated_items"].apply(lambda x: json.loads(x) if x else {})
 
-    # Set log_time as index for better readability
-    df.set_index("log_time", inplace=True)
+    # **Filter out rows where all three fields are empty dictionaries**
+    df = df[~(df["new_items"].apply(lambda x: x == {}) &
+              df["removed_items"].apply(lambda x: x == {}) &
+              df["updated_items"].apply(lambda x: x == {}))]
 
-    return df
+    # Function to transform dictionary into DataFrame format
+    def expand_items(log_time, item_dict, change_type):
+        rows = []
+        for name, details in item_dict.items():
+            row = {
+                "log_time": log_time,
+                "change_type": change_type,
+                "item_name": name,
+                **details  # Expand availability, link, price into columns
+            }
+            rows.append(row)
+        return rows
+
+    # Flatten dictionaries
+    expanded_data = []
+    for _, row in df.iterrows():
+        expanded_data.extend(expand_items(row["log_time"], row["new_items"], "new"))
+        expanded_data.extend(expand_items(row["log_time"], row["removed_items"], "removed"))
+        expanded_data.extend(expand_items(row["log_time"], row["updated_items"], "updated"))
+
+    # Convert to DataFrame
+    expanded_df = pd.DataFrame(expanded_data)
+
+    # Ensure correct column order
+    if not expanded_df.empty:
+        expanded_df = expanded_df[["log_time", "change_type", "item_name", "availability", "link", "price"]]
+
+    return expanded_df
+
 
 df_logs = fetch_comparison_log()
 st.dataframe(df_logs)
