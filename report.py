@@ -41,7 +41,9 @@ def fetch_comparison_log():
                 "log_time": log_time,
                 "change_type": change_type,
                 "item_name": name,
-                **details  # Expand availability, link, price into columns
+                "availability": details.get("availability", ""),  # Handle missing keys safely
+                "link": details.get("link", ""),
+                "price": details.get("price", "")
             }
             rows.append(row)
         return rows
@@ -56,9 +58,14 @@ def fetch_comparison_log():
     # Convert to DataFrame
     expanded_df = pd.DataFrame(expanded_data)
 
-    # Ensure correct column order
-    if not expanded_df.empty:
-        expanded_df = expanded_df[["log_time", "change_type", "item_name", "availability", "link", "price"]]
+    # Ensure all expected columns exist
+    expected_columns = ["log_time", "change_type", "item_name", "availability", "link", "price"]
+    for col in expected_columns:
+        if col not in expanded_df.columns:
+            expanded_df[col] = ""  # Add missing columns with empty values
+
+    # Reorder columns
+    expanded_df = expanded_df[expected_columns]
 
     return expanded_df
 
