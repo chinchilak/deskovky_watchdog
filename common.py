@@ -185,16 +185,15 @@ def compare_runs(ts1, ts2):
     for name in names1 & names2:
         diff = {}
         if run1[name]["availability"] != run2[name]["availability"]:
-            diff["availability"] = f"{run1[name]["availability"]} -> {run2[name]["availability"]}"
-        else:
-            diff["availability"] = run2[name]["availability"]
+            diff["availability"] = f"{run1[name]['availability']} -> {run2[name]['availability']}"
+        
         if run1[name]["price"] != run2[name]["price"]:
-            diff["price"] = f"{run1[name]["availability"]} -> {run2[name]["availability"]}"
-        else:
-            diff["price"] = run2[name]["price"]
+            diff["price"] = f"{run1[name]['price']} -> {run2[name]['price']}"
+        
         if diff:
             diff["link"] = run2[name]["link"]
             updated_products[name] = diff
+
     return new_products, removed_products, updated_products
 
 
@@ -241,4 +240,12 @@ def get_latest_timestamps():
     # Ensure there are at least two timestamps to compare
     if len(timestamps) < 2:
         return timestamps[0] if timestamps else None, timestamps[0] if timestamps else None
-    return timestamps[1], timestamps[0] 
+    return timestamps[1], timestamps[0]
+
+
+def delete_product_by_id(id):
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+    c.execute("DELETE FROM comparison_log WHERE id = ?", (id,))
+    conn.commit()
+    conn.close()

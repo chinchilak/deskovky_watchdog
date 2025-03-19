@@ -74,23 +74,21 @@ else:
             st.markdown("### New Products (present only in the second run)")
             if new_products:
                 for name, details in new_products.items():
-                    st.write(f"- **{name}** – Price: {details['price']}, Availability: {details['availability']}")
+                    st.write(f"- **{name}** – Price: {details['price']}, Availability: {details['availability']}, Link: {details['link']}")
             else:
                 st.write("None")
             
             st.markdown("### Removed Products (present only in the first run)")
             if removed_products:
                 for name, details in removed_products.items():
-                    st.write(f"- **{name}** – Price: {details['price']}, Availability: {details['availability']}")
+                    st.write(f"- **{name}** – Price: {details['price']}, Availability: {details['availability']}, Link: {details['link']}")
             else:
                 st.write("None")
             
             st.markdown("### Updated Products (changed availability or price)")
             if updated_products:
-                for name, changes in updated_products.items():
-                    st.write(f"- **{name}**:")
-                    for field, vals in changes.items():
-                        st.write(f"    - {field}: {vals['old']} → {vals['new']}")
+                for name, details in updated_products.items():
+                    st.write(f"- **{name}** – Price: {details['price']}, Availability: {details['availability']}, Link: {details['link']}")
             else:
                 st.write("None")
 
