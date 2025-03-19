@@ -185,10 +185,15 @@ def compare_runs(ts1, ts2):
     for name in names1 & names2:
         diff = {}
         if run1[name]["availability"] != run2[name]["availability"]:
-            diff["availability"] = {"old": run1[name]["availability"], "new": run2[name]["availability"]}
+            diff["availability"] = f"{run1[name]["availability"]} -> {run2[name]["availability"]}"
+        else:
+            diff["availability"] = run2[name]["availability"]
         if run1[name]["price"] != run2[name]["price"]:
-            diff["price"] = {"old": run1[name]["price"], "new": run2[name]["price"]}
+            diff["price"] = f"{run1[name]["availability"]} -> {run2[name]["availability"]}"
+        else:
+            diff["price"] = run2[name]["price"]
         if diff:
+            diff["link"] = run2[name]["link"]
             updated_products[name] = diff
     return new_products, removed_products, updated_products
 
