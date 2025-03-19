@@ -223,7 +223,7 @@ def log_comparison_to_db():
 
 def get_latest_timestamps():
     """Fetch the two most recent timestamps from the database."""
-    conn = sqlite3.connect("scrape_data.db")
+    conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
     cursor.execute("""
         SELECT DISTINCT run_timestamp FROM product 
