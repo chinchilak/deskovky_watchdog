@@ -71,4 +71,4 @@ def fetch_comparison_log():
 
 
 df_logs = fetch_comparison_log()
-st.dataframe(df_logs)
+st.data_editor(df_logs, use_container_width=True, hide_index=True, column_config={"link": st.column_config.LinkColumn("link")})
