@@ -1,31 +1,34 @@
 import streamlit as st
 import datetime
-
 from apscheduler.schedulers.background import BackgroundScheduler
+from apscheduler.jobstores.sqlalchemy import SQLAlchemyJobStore
 from apscheduler.triggers.cron import CronTrigger
 from apscheduler.triggers.interval import IntervalTrigger
-
-from common import fetch_all_data, insert_products, clean_old_data, log_comparison_to_db, get_latest_timestamps
-
+from tasks import run_scrape_job
 
 st.set_page_config(layout="wide", page_title="Schedule & Run Scraper")
 
-
 st.write("## Schedule & Run Scraper Page Loaded")
 
+# Initialize persistent scheduler
 if "scheduler" not in st.session_state:
-    st.session_state.scheduler = BackgroundScheduler()
-    st.session_state.scheduler.start()
+    jobstores = {
+        'default': SQLAlchemyJobStore(url='sqlite:///scrape_data.db')
+    }
+    scheduler = BackgroundScheduler(jobstores=jobstores)
+    scheduler.start()
+    st.session_state.scheduler = scheduler
     st.success("Scheduler created and started.")
 else:
     st.info("Scheduler loaded from session state.")
 
-def run_scrape_job(job_name:str=""):
-    products = fetch_all_data()
-    insert_products(products)
-    clean_old_data()    
-    log_comparison_to_db()
+# Run job on demand
+if st.button("Run Scraper"):
+    run_scrape_job()
 
+# Job setup UI
+job_type = st.selectbox("Job Type", options=["Cron", "Interval"])
+job_name = st.text_input("Job Name", value="ScrapeJob")
 
 def schedule_cron_jobs(job_name, frequency, days, times):
     job_list = []
@@ -33,7 +36,7 @@ def schedule_cron_jobs(job_name, frequency, days, times):
         for t in times:
             job_id = f"{job_name}_daily_{t.strftime('%H%M')}_{int(datetime.datetime.now().timestamp())}"
             trigger = CronTrigger(hour=t.hour, minute=t.minute)
-            st.session_state.scheduler.add_job(run_scrape_job, trigger=trigger, args=[job_name], id=job_id, replace_existing=False)
+            st.session_state.scheduler.add_job("tasks:run_scrape_job", trigger=trigger, args=[job_name], id=job_id, replace_existing=False)
             job = st.session_state.scheduler.get_job(job_id)
             job_list.append((job_id, job.next_run_time))
     elif frequency == "weekly":
@@ -41,14 +44,14 @@ def schedule_cron_jobs(job_name, frequency, days, times):
         t = times[0]
         job_id = f"{job_name}_weekly_{day_of_week}_{t.strftime('%H%M')}_{int(datetime.datetime.now().timestamp())}"
         trigger = CronTrigger(day_of_week=day_of_week, hour=t.hour, minute=t.minute)
-        st.session_state.scheduler.add_job(run_scrape_job, trigger=trigger, args=[job_name], id=job_id, replace_existing=False)
+        st.session_state.scheduler.add_job("tasks:run_scrape_job", trigger=trigger, args=[job_name], id=job_id, replace_existing=False)
         job = st.session_state.scheduler.get_job(job_id)
         job_list.append((job_id, job.next_run_time))
     elif frequency == "monthly":
         t = times[0]
         job_id = f"{job_name}_monthly_{t.strftime('%H%M')}_{int(datetime.datetime.now().timestamp())}"
         trigger = CronTrigger(day=1, hour=t.hour, minute=t.minute)
-        st.session_state.scheduler.add_job(run_scrape_job, trigger=trigger, args=[job_name], id=job_id, replace_existing=False)
+        st.session_state.scheduler.add_job("tasks:run_scrape_job", trigger=trigger, args=[job_name], id=job_id, replace_existing=False)
         job = st.session_state.scheduler.get_job(job_id)
         job_list.append((job_id, job.next_run_time))
     return job_list
@@ -60,20 +63,13 @@ def schedule_interval_job(job_name, interval_value, interval_unit):
     elif interval_unit == "hours":
         trigger = IntervalTrigger(hours=interval_value)
     else:
-        trigger = None
-    if trigger:
-        st.session_state.scheduler.add_job(run_scrape_job, trigger=trigger, args=[job_name], id=job_id, replace_existing=False)
-        job = st.session_state.scheduler.get_job(job_id)
-        return job_id, job.next_run_time
-    else:
         return None, None
 
-if st.button("Run Scraper"):
-    run_scrape_job()
+    st.session_state.scheduler.add_job("tasks:run_scrape_job", trigger=trigger, args=[job_name], id=job_id, replace_existing=False)
+    job = st.session_state.scheduler.get_job(job_id)
+    return job_id, job.next_run_time
 
-job_type = st.selectbox("Job Type", options=["Cron", "Interval"])
-job_name = st.text_input("Job Name", value="ScrapeJob")
-
+# Job scheduling UI
 if job_type == "Cron":
     frequency = st.selectbox("Frequency", options=["daily", "weekly", "monthly"])
     if frequency == "daily":
@@ -91,7 +87,7 @@ if job_type == "Cron":
     elif frequency == "monthly":
         time_input = st.time_input("Time for monthly job", value=datetime.time(12, 0))
         times = [time_input]
-    
+
     if st.button("Add Cron Job"):
         if frequency == "daily" and not times:
             st.error("Please enter valid times for daily job.")
@@ -112,7 +108,7 @@ elif job_type == "Interval":
         else:
             st.error("Error scheduling interval job.")
 
-
+# Show existing jobs
 st.subheader("Current Scheduled Jobs")
 jobs = st.session_state.scheduler.get_jobs()
 if jobs:
@@ -127,7 +123,7 @@ if jobs:
                 try:
                     st.session_state.scheduler.remove_job(job.id)
                     st.success(f"Deleted job: {job.id}")
-                    st.rerun()  # Refresh to update job list
+                    st.rerun()
                 except Exception as e:
                     st.error(f"Error deleting job {job.id}: {e}")
 else:
