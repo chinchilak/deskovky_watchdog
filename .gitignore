@@ -1,4 +1,5 @@
 scrape_data.db
+dbview.py
 
 __pycache__/
 *.pyc

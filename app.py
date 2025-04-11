@@ -6,7 +6,7 @@ create_db()
 pages = {
     "Menu": [
         st.Page("report.py", title="Report"),
-        st.Page("schedule.py", title="Schedule & Run Scraper"),
+        st.Page("schedule.py", title="Scheduler"),
         st.Page("dbview.py", title="View Database Data")
     ]
 }
