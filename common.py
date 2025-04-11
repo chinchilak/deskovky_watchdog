@@ -20,14 +20,7 @@ def create_db():
             link TEXT
         )
     ''')
-    c.execute('''
-        CREATE TABLE IF NOT EXISTS schedule_config (
-            id INTEGER PRIMARY KEY,
-            frequency TEXT,
-            days TEXT,
-            time_of_day TEXT
-        )
-    ''')
+
     c.execute('''
         CREATE TABLE IF NOT EXISTS comparison_log (
         id INTEGER PRIMARY KEY AUTOINCREMENT,

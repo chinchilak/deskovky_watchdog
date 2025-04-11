@@ -4,7 +4,10 @@ from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.jobstores.sqlalchemy import SQLAlchemyJobStore
 from apscheduler.triggers.cron import CronTrigger
 from apscheduler.triggers.interval import IntervalTrigger
+
 from tasks import run_scrape_job
+from common import DB_PATH
+
 
 st.set_page_config(layout="wide", page_title="Schedule & Run Scraper")
 
@@ -13,7 +16,7 @@ st.write("## Schedule & Run Scraper Page Loaded")
 # Initialize persistent scheduler
 if "scheduler" not in st.session_state:
     jobstores = {
-        'default': SQLAlchemyJobStore(url='sqlite:///scrape_data.db')
+        'default': SQLAlchemyJobStore(url=f'sqlite:///{DB_PATH}')
     }
     scheduler = BackgroundScheduler(jobstores=jobstores)
     scheduler.start()
