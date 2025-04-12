@@ -1,5 +1,6 @@
 scrape_data.db
 dbview.py
+dagger.py
 
 __pycache__/
 *.pyc
