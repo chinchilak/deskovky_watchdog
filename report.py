@@ -8,11 +8,11 @@ from common import DB_PATH
 st.set_page_config(layout="wide")
 
 
-def st_num_of_rows(pdframe:pd.DataFrame, limit:bool=False) -> int:
+def st_num_of_rows(pdframe:pd.DataFrame, limit:bool=False, nor:int=100) -> int:
     nrows = len(pdframe)
     res = (nrows + 1) * 35 + 3
-    if limit and res > 1000:
-        res = 1000
+    if limit and res > nor:
+        res = nor
     return res
     
 
@@ -97,7 +97,7 @@ nrows = len(filtered_df)
 
 st.data_editor(
     filtered_df,
-    use_container_width=True,
+    width="stretch",
     hide_index=True,
     height=st_num_of_rows(filtered_df),
     column_config={"link": st.column_config.LinkColumn("link")}

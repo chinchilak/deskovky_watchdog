@@ -1,6 +1,6 @@
-APScheduler==3.11.0
-beautifulsoup4==4.13.3
-pandas==2.2.3
-Requests==2.32.3
-streamlit==1.43.2
-SQLAlchemy>=1.4
+APScheduler
+beautifulsoup4
+pandas
+Requests
+streamlit
+SQLAlchemy

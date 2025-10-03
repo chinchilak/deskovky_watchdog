@@ -5,8 +5,7 @@ from apscheduler.jobstores.sqlalchemy import SQLAlchemyJobStore
 from apscheduler.triggers.cron import CronTrigger
 from apscheduler.triggers.interval import IntervalTrigger
 
-from tasks import run_scrape_job
-from common import DB_PATH
+from common import DB_PATH, run_scrape_job
 
 
 st.set_page_config(layout="wide", page_title="Schedule & Run Scraper")
@@ -81,7 +80,7 @@ if job_type == "Cron":
             time_strings = [t.strip() for t in times_input.split(",") if t.strip()]
             times = [datetime.datetime.strptime(t, "%H:%M").time() for t in time_strings]
         except Exception as e:
-            st.error("Error parsing times. Please ensure they are in HH:MM format.")
+            st.error("Error parsing times. Please ensure they are in HH:MM format.", e)
             times = []
     elif frequency == "weekly":
         days = st.text_input("Enter days (e.g., Mon,Wed,Fri)", value="Mon,Wed,Fri")

@@ -242,3 +242,14 @@ def delete_product_by_id(id):
     c.execute("DELETE FROM comparison_log WHERE id = ?", (id,))
     conn.commit()
     conn.close()
+
+
+def run_scrape_job(job_name=""):
+    """
+    Run full scrape + insert + cleanup + comparison logging.
+    `job_name` is optional and can be used for job ID tagging/logging.
+    """
+    products = fetch_all_data()
+    insert_products(products)
+    clean_old_data()
+    log_comparison_to_db()
