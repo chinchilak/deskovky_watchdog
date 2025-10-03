@@ -38,7 +38,7 @@ def schedule_cron_jobs(job_name, frequency, days, times):
         for t in times:
             job_id = f"{job_name}_daily_{t.strftime('%H%M')}_{int(datetime.datetime.now().timestamp())}"
             trigger = CronTrigger(hour=t.hour, minute=t.minute)
-            st.session_state.scheduler.add_job("tasks:run_scrape_job", trigger=trigger, args=[job_name], id=job_id, replace_existing=False)
+            st.session_state.scheduler.add_job(run_scrape_job, trigger=trigger, args=[job_name], id=job_id, replace_existing=False)
             job = st.session_state.scheduler.get_job(job_id)
             job_list.append((job_id, job.next_run_time))
     elif frequency == "weekly":
@@ -46,14 +46,14 @@ def schedule_cron_jobs(job_name, frequency, days, times):
         t = times[0]
         job_id = f"{job_name}_weekly_{day_of_week}_{t.strftime('%H%M')}_{int(datetime.datetime.now().timestamp())}"
         trigger = CronTrigger(day_of_week=day_of_week, hour=t.hour, minute=t.minute)
-        st.session_state.scheduler.add_job("tasks:run_scrape_job", trigger=trigger, args=[job_name], id=job_id, replace_existing=False)
+        st.session_state.scheduler.add_job(run_scrape_job, trigger=trigger, args=[job_name], id=job_id, replace_existing=False)
         job = st.session_state.scheduler.get_job(job_id)
         job_list.append((job_id, job.next_run_time))
     elif frequency == "monthly":
         t = times[0]
         job_id = f"{job_name}_monthly_{t.strftime('%H%M')}_{int(datetime.datetime.now().timestamp())}"
         trigger = CronTrigger(day=1, hour=t.hour, minute=t.minute)
-        st.session_state.scheduler.add_job("tasks:run_scrape_job", trigger=trigger, args=[job_name], id=job_id, replace_existing=False)
+        st.session_state.scheduler.add_job(run_scrape_job, trigger=trigger, args=[job_name], id=job_id, replace_existing=False)
         job = st.session_state.scheduler.get_job(job_id)
         job_list.append((job_id, job.next_run_time))
     return job_list
@@ -67,7 +67,7 @@ def schedule_interval_job(job_name, interval_value, interval_unit):
     else:
         return None, None
 
-    st.session_state.scheduler.add_job("tasks:run_scrape_job", trigger=trigger, args=[job_name], id=job_id, replace_existing=False)
+    st.session_state.scheduler.add_job(run_scrape_job, trigger=trigger, args=[job_name], id=job_id, replace_existing=False)
     job = st.session_state.scheduler.get_job(job_id)
     return job_id, job.next_run_time
 

@@ -1,6 +1,0 @@
-APScheduler
-beautifulsoup4
-pandas
-Requests
-streamlit
-SQLAlchemy

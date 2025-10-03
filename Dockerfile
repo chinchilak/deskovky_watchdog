@@ -2,9 +2,13 @@ FROM python:3.12-slim
 
 WORKDIR /app
 
-COPY . .
+RUN pip install --no-cache-dir uv
 
-RUN pip install --no-cache-dir -r requirements.txt
+COPY pyproject.toml ./
+
+RUN uv pip install --system --no-cache .
+
+COPY . .
 
 EXPOSE 8501
 

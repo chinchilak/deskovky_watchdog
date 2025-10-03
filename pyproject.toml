@@ -1,0 +1,18 @@
+[project]
+name = "deskovky-watchdog"
+version = "0.1.0"
+description = "A Streamlit-based scraper with APScheduler"
+authors = [
+  { name = "Your Name", email = "you@example.com" }
+]
+readme = "README.md"
+requires-python = ">=3.12"
+
+dependencies = [
+    "APScheduler",
+    "beautifulsoup4",
+    "pandas",
+    "requests",
+    "streamlit",
+    "SQLAlchemy"
+]
