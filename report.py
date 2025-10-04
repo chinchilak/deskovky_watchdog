@@ -8,7 +8,7 @@ from common import DB_PATH
 st.set_page_config(layout="wide")
 
 
-def st_num_of_rows(pdframe:pd.DataFrame, limit:bool=False, nor:int=100) -> int:
+def st_num_of_rows(pdframe:pd.DataFrame, limit:bool=False, nor:int=30) -> int:
     nrows = len(pdframe)
     res = (nrows + 1) * 35 + 3
     if limit and res > nor:
